@@ -81,5 +81,12 @@ class UserTest(unittest.TestCase):
         rv = self.login('samuel', 'test')
         assert 'User samuel logged in' in str(rv.data)
         
+        rv = self.logout()
+        assert 'User logged out' in str(rv.data)
+        
+        rv = self.login('samuel','wrong')
+        assert "Incorrect username or password" in str(rv.data)
+        
+        
 if __name__ == '__main__':
     unittest.main()
