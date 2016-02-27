@@ -32,7 +32,9 @@ class Post(db.Model):
     #true if showing false if not
     live = db.Column(db.Boolean)
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
+    
     category = db.relationship('Category', backref=db.backref('posts', lazy='dynamic'))
+    comments = db.relationship('Comment', backref='post', lazy='dynamic')
     
     #calculates the image url of the image
     @property
@@ -67,4 +69,25 @@ class Category(db.Model):
     
     def __repr__(self):
         return self.name
+        
+class Comment(db.Model):
+    id = db.Column(db.Integer, primary_key = True)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
+    author_id = db.Column(db.Integer, db.ForeignKey('author.id'))
+    body = db.Column(db.Text)
+    publish_date = db.Column(db.DateTime)    
+    live = db.Column(db.Boolean)
     
+    def __init__(self, post, author, body, publish_date = None, live=True ):
+        self.post_id = post.id
+        self.author_id = author.id
+        self.body = body
+        if publish_date is None:
+            self.publish_date = datetime.utcnow()
+        else:
+            self.publish_date = publish_date
+        self.live = live
+        
+    def __repr__(self):
+        return self.body
+        

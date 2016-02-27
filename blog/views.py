@@ -1,8 +1,8 @@
 from flask_blog import app, db, uploaded_images
 from flask import render_template, redirect, flash, url_for, session, abort, request
-from blog.form import SetupForm, PostForm
+from blog.form import SetupForm, PostForm, CommentForm
 from author.models import Author
-from blog.models import Blog, Post, Category
+from blog.models import Blog, Post, Category, Comment
 from author.decorators import login_required, author_required
 import bcrypt
 from slugify import slugify
@@ -47,7 +47,7 @@ def setup():
     if form.validate_on_submit():
         # generates password hash    
         salt = bcrypt.gensalt()
-        #creates hashed password by using the salt to hash the pw given in the form
+        # creates hashed password by using the salt to hash the pw given in the form
         hashed_password = bcrypt.hashpw(form.password.data, salt)
         
         author = Author(
@@ -134,25 +134,43 @@ def post():
     return render_template('blog/post.html', form=form, action="new")
   
 #<slug> looks up url based on slug from database  
-@app.route('/article/<slug>')
+@app.route('/article/<slug>', methods = ('GET','POST'))
 def article(slug):
+    form = CommentForm()
     #get posts by slug ID
     #first_or_404: if post found returns post if not returns 404
     post = Post.query.filter_by(slug=slug).first_or_404()
-    return render_template('blog/article.html', post=post)
+    if form.validate_on_submit():
+        author = Author.query.filter_by(username = session['username']).first()
+        body = form.body.data
+        comment = Comment(post, author, body)
+        db.session.add(comment)
+        db.session.commit()
+        return redirect(url_for('article', slug=slug))
+    comments = Comment.query.filter_by(live=True).filter_by(post_id=post.id)
+    return render_template('blog/article.html', post=post, form=form, comments = comments, action="new")
     
-@app.route('/delete/<int:post_id>')
+@app.route('/delete_post/<int:post_id>')
 @author_required
-def delete(post_id):
+def delete_post(post_id):
     post = Post.query.filter_by(id=post_id).first_or_404()
     post.live=False
     db.session.commit()
     flash('Article deleted')
     return redirect('admin')
     
-@app.route('/edit/<int:post_id>', methods=('GET','POST'))
+@app.route('/delete_comment/<int:comment_id>')
 @author_required
-def edit(post_id):
+def delete_comment(comment_id):
+    comment = Comment.query.filter_by(id=comment_id).first_or_404()
+    comment.live=False
+    db.session.commit()
+    flash('Comment deleted')
+    return redirect(url_for('article', slug = comment.post.slug))
+    
+@app.route('/edit_post/<int:post_id>', methods=('GET','POST'))
+@author_required
+def edit_post(post_id):
     #get post
     post = Post.query.filter_by(id=post_id).first_or_404()
     #assign all fields from post to the form
@@ -185,5 +203,17 @@ def edit(post_id):
         return redirect(url_for('article', slug=post.slug))
     return render_template('blog/post.html', form=form, post=post, action='edit')
     
+@app.route('/edit_comment/<int:comment_id>', methods=('GET','POST'))
+@author_required
+def edit_comment(comment_id):
+    comment = Comment.query.filter_by(id=comment_id).first_or_404()
+    form = CommentForm(obj = comment)
+    if form.validate_on_submit():
+        form.populate_obj(comment)
+        db.session.commit()
+        return redirect(url_for('article', slug = comment.post.slug)) 
+    return render_template('blog/article.html', form = form, post = comment.post, comment = comment, action='edit')
+        
+        
     
     

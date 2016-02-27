@@ -30,4 +30,7 @@ class PostForm(Form):
     #query_factory points to defined function
     category = QuerySelectField('Category', query_factory=categories, allow_blank=True)
     new_category = StringField('New Category')
+    
+class CommentForm(Form):
+    body = TextAreaField('comment', validators = [validators.Required()])
         

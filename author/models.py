@@ -9,6 +9,7 @@ class Author(db.Model):
     is_author = db.Column(db.Boolean)
     
     posts = db.relationship('Post', backref='author', lazy='dynamic')
+    comments = db.relationship('Comment', backref='author', lazy='dynamic')
     
     #first call (constructor)?
     def __init__(self, fullname, email, username, password, is_author):

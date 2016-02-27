@@ -58,4 +58,5 @@ def success():
 def logout():
     session.pop('username')
     session.pop('is_author')
+    flash("User logged out")
     return redirect(url_for('index'))
