@@ -1,6 +1,6 @@
 import os
 
-SECRET_KEY = 'meep'
+SECRET_KEY = ''
 DEBUG = True
 DB_USERNAME = 'ssam123'
 DB_PASSWORD = ''
